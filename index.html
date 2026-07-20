@@ -72,7 +72,7 @@
         }
 
         .login-title {
-            font-size: 3em; /* Légèrement réduit pour bien faire tenir le titre */
+            font-size: 3em; 
             color: white;
             margin-bottom: 5px;
             font-weight: 900;
@@ -92,14 +92,14 @@
             background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(12px); 
             -webkit-backdrop-filter: blur(12px);
-            padding: 30px 25px; /* Boîte réduite */
+            padding: 30px 25px; 
             border-radius: 20px;
             box-shadow: 0 15px 30px rgba(0,0,0,0.2);
             display: flex;
             flex-direction: column;
             gap: 12px;
             width: 100%;
-            max-width: 290px; /* Boîte réduite */
+            max-width: 290px; 
             border: 1px solid rgba(255,255,255,0.5);
         }
 
@@ -158,7 +158,7 @@
         .btn-outline:hover { background: #F8FAFC; }
         .btn-danger { background: #EF4444; padding: 6px 10px; font-size: 0.8em; box-shadow: none;}
 
-        input[type="date"], input[type="text"], input[type="password"], input[type="time"], textarea { 
+        input[type="date"], input[type="text"], input[type="time"], textarea { 
             padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.95em;
         }
 
@@ -216,7 +216,10 @@
             <h3 style="margin: 0 0 5px 0; color: var(--primary); font-size: 1.1em;">Accès privé</h3>
             <div class="password-hint">Format attendu : JJ/MM/AAAA</div>
             
-            <input type="password" id="password-input" placeholder="JJ/MM/AAAA" onkeypress="if(event.key === 'Enter') checkPassword()">
+            <!-- Modification ici : type="text", ajout maxlength et oninput -->
+            <input type="text" id="password-input" placeholder="JJ/MM/AAAA" maxlength="10" 
+                   oninput="formatDateInput(event)" 
+                   onkeypress="if(event.key === 'Enter') checkPassword()">
             
             <button onclick="checkPassword()">Ouvrir le carnet</button>
         </div>
@@ -276,7 +279,25 @@
 </dialog>
 
 <script>
-    // --- GESTION DU MOT DE PASSE ---
+    // --- GESTION DE L'AFFICHAGE DU MOT DE PASSE (AUTO FORMAT JJ/MM/AAAA) ---
+    function formatDateInput(event) {
+        // Enlève tout ce qui n'est pas un chiffre
+        let val = event.target.value.replace(/\D/g, ''); 
+        if (val.length > 8) val = val.substring(0, 8); 
+        
+        // Ajoute automatiquement les barres obliques au bon endroit
+        let formatted = val;
+        if (val.length > 4) {
+            formatted = val.substring(0, 2) + '/' + val.substring(2, 4) + '/' + val.substring(4);
+        } else if (val.length > 2) {
+            formatted = val.substring(0, 2) + '/' + val.substring(2);
+        }
+        
+        // Remplace le texte affiché par le texte formaté
+        event.target.value = formatted;
+    }
+
+    // --- GESTION DE LA CONNEXION ---
     function checkPassword() {
         const input = document.getElementById('password-input').value;
         if (input === '20/06/2026') {
@@ -284,7 +305,7 @@
             document.getElementById('app-section').style.display = 'block';
             connectFirebase();
         } else {
-            alert('Mot de passe incorrect 🌴 N\'oubliez pas les barres (/) !');
+            alert('Mot de passe incorrect 🌴');
             document.getElementById('password-input').value = '';
         }
     }
