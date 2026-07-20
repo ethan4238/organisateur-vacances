@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Organisateur de Vacances</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f0f2f5; 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: auto; 
+        }
+        h1 { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-bottom: 30px;
+        }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            margin-bottom: 20px; 
+        }
+        .day-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid #eee; 
+            padding-bottom: 10px; 
+            margin-bottom: 15px; 
+        }
+        .day-title { 
+            font-size: 1.5em; 
+            color: #2980b9; 
+            font-weight: bold; 
+        }
+        input[type="text"], input[type="date"] { 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            margin-right: 10px; 
+            flex: 1; 
+            font-family: inherit;
+        }
+        button { 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            transition: background 0.3s; 
+            font-weight: bold;
+        }
+        button:hover { background: #2980b9; }
+        .delete-btn { 
+            background: #e74c3c; 
+            padding: 5px 10px; 
+            font-size: 0.9em; 
+        }
+        .delete-btn:hover { background: #c0392b; }
+        .add-day-form { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px;
+            margin-bottom: 30px; 
+            background: #eaf2f8;
+        }
+        .activity-list { 
+            list-style: none; 
+            padding: 0; 
+        }
+        .activity-item { 
+            background: #f9f9f9; 
+            padding: 12px; 
+            border-left: 4px solid #3498db; 
+            margin-bottom: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-radius: 4px; 
+        }
+        .add-activity-form { 
+            display: flex; 
+            margin-top: 15px; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌴 Mon Organisateur de Vacances</h1>
+    
+    <!-- Formulaire pour ajouter un nouveau jour -->
+    <div class="card add-day-form">
+        <input type="text" id="new-day-name" placeholder="Ex: Jour 1 - Arrivée à Rome">
+        <input type="date" id="new-day-date">
+        <button onclick="addDay()">+ Ajouter ce jour</button>
+    </div>
+
+    <!-- Conteneur où les jours s'afficheront -->
+    <div id="days-container"></div>
+</div>
+
+<script>
+    // Récupérer les données sauvegardées ou créer un tableau vide
+    let days = JSON.parse(localStorage.getItem('vacationDays')) || [];
+
+    // Fonction pour sauvegarder et mettre à jour l'affichage
+    function saveAndRender() {
+        localStorage.setItem('vacationDays', JSON.stringify(days));
+        renderDays();
+    }
+
+    // Ajouter un nouveau jour
+    function addDay() {
+        const nameInput = document.getElementById('new-day-name');
+        const dateInput = document.getElementById('new-day-date');
+        
+        if (nameInput.value.trim() === '') {
+            alert('Veuillez entrer un nom pour ce jour (ex: Jour 1).');
+            return;
+        }
+
+        days.push({
+            id: Date.now(), // Identifiant unique
+            name: nameInput.value,
+            date: dateInput.value,
+            activities: []
+        });
+        
+        nameInput.value = '';
+        dateInput.value = '';
+        saveAndRender();
+    }
+
+    // Supprimer un jour entier
+    function deleteDay(id) {
+        if(confirm("Êtes-vous sûr de vouloir supprimer ce jour et toutes ses activités ?")) {
+            days = days.filter(day => day.id !== id);
+            saveAndRender();
+        }
+    }
+
+    // Ajouter une activité à un jour spécifique
+    function addActivity(dayId) {
+        const input = document.getElementById(`activity-input-${dayId}`);
+        if (input.value.trim() === '') return;
+
+        const day = days.find(d => d.id === dayId);
+        day.activities.push({
+            id: Date.now(),
+            text: input.value
+        });
+        saveAndRender();
+    }
+
+    // Supprimer une activité
+    function deleteActivity(dayId, activityId) {
+        const day = days.find(d => d.id === dayId);
+        day.activities = day.activities.filter(a => a.id !== activityId);
+        saveAndRender();
+    }
+
+    // Afficher les jours sur la page
+    function renderDays() {
+        const container = document.getElementById('days-container');
+        container.innerHTML = '';
+
+        // Trier les jours par date s'ils en ont une
+        days.sort((a, b) => {
+            if (!a.date) return 1;
+            if (!b.date) return -1;
+            return new Date(a.date) - new Date(b.date);
+        });
+
+        days.forEach(day => {
+            // Formater la date pour l'affichage (optionnel)
+            const dateStr = day.date 
+                ? `<span style="color:#7f8c8d; font-size:0.6em; margin-left:10px;">(${new Date(day.date).toLocaleDateString('fr-FR')})</span>` 
+                : '';
+            
+            // Générer le code HTML des activités
+            let activitiesHtml = day.activities.map(act => `
+                <li class="activity-item">
+                    <span>${act.text}</span>
+                    <button class="delete-btn" onclick="deleteActivity(${day.id}, ${act.id})" title="Supprimer l'activité">X</button>
+                </li>
+            `).join('');
+
+            // Créer la carte du jour
+            container.innerHTML += `
+                <div class="card">
+                    <div class="day-header">
+                        <div class="day-title">${day.name} ${dateStr}</div>
+                        <button class="delete-btn" onclick="deleteDay(${day.id})">Supprimer le jour</button>
+                    </div>
+                    <ul class="activity-list">
+                        ${activitiesHtml}
+                    </ul>
+                    <div class="add-activity-form">
+                        <input type="text" id="activity-input-${day.id}" placeholder="Nouvelle activité (ex: Visite du musée à 14h)" onkeypress="if(event.key === 'Enter') addActivity(${day.id})">
+                        <button onclick="addActivity(${day.id})">Ajouter</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // Afficher au chargement de la page
+    renderDays();
+</script>
+</body>
+</html>
