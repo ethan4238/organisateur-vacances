@@ -3,219 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Organisateur de Vacances</title>
+    <title>Calendrier de Vacances</title>
     <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: #f0f2f5; 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
             margin: 0; 
             padding: 20px; 
             color: #333; 
         }
         .container { 
-            max-width: 800px; 
+            max-width: 1200px; 
             margin: auto; 
         }
         h1 { 
             text-align: center; 
-            color: #2c3e50; 
+            color: var(--primary); 
             margin-bottom: 30px;
         }
-        .card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-            margin-bottom: 20px; 
+        
+        /* Section de configuration */
+        #setup-section {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
         }
-        .day-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 2px solid #eee; 
-            padding-bottom: 10px; 
-            margin-bottom: 15px; 
+        .date-inputs {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
         }
-        .day-title { 
-            font-size: 1.5em; 
-            color: #2980b9; 
-            font-weight: bold; 
+        .date-inputs div {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
         }
-        input[type="text"], input[type="date"] { 
+        input[type="date"], input[type="text"], textarea { 
             padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            margin-right: 10px; 
-            flex: 1; 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
             font-family: inherit;
         }
+
+        /* Section Calendrier */
+        #calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .day-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 150px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .day-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            border-color: var(--secondary);
+        }
+        .day-date {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--primary);
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        .day-preview {
+            font-size: 0.9em;
+            flex: 1;
+        }
+        .preview-activity {
+            margin: 4px 0;
+            padding-left: 12px;
+            position: relative;
+        }
+        .preview-activity::before {
+            content: "•";
+            color: var(--secondary);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        .has-notes {
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* Modal (Pop-up) */
+        dialog {
+            border: none;
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        dialog::backdrop {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 { margin: 0; color: var(--primary); }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #999;
+        }
+        .activity-list { list-style: none; padding: 0; margin-bottom: 20px;}
+        .activity-item {
+            background: var(--bg);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .activity-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .activity-input-group input { flex: 1; }
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            min-height: 100px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        /* Boutons */
         button { 
-            background: #3498db; 
+            background: var(--secondary); 
             color: white; 
             border: none; 
             padding: 10px 15px; 
-            border-radius: 4px; 
+            border-radius: 6px; 
             cursor: pointer; 
-            transition: background 0.3s; 
             font-weight: bold;
+            transition: opacity 0.2s;
         }
-        button:hover { background: #2980b9; }
-        .delete-btn { 
-            background: #e74c3c; 
-            padding: 5px 10px; 
-            font-size: 0.9em; 
-        }
-        .delete-btn:hover { background: #c0392b; }
-        .add-day-form { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 10px;
-            margin-bottom: 30px; 
-            background: #eaf2f8;
-        }
-        .activity-list { 
-            list-style: none; 
-            padding: 0; 
-        }
-        .activity-item { 
-            background: #f9f9f9; 
-            padding: 12px; 
-            border-left: 4px solid #3498db; 
-            margin-bottom: 10px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            border-radius: 4px; 
-        }
-        .add-activity-form { 
-            display: flex; 
-            margin-top: 15px; 
-        }
+        button:hover { opacity: 0.9; }
+        .btn-danger { background: #e74c3c; }
+        .btn-small { padding: 4px 8px; font-size: 0.8em; }
+        .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--border); }
+        .btn-outline:hover { background: var(--bg); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🌴 Mon Organisateur de Vacances</h1>
+    <h1>🗓️ Mon Calendrier de Vacances</h1>
     
-    <!-- Formulaire pour ajouter un nouveau jour -->
-    <div class="card add-day-form">
-        <input type="text" id="new-day-name" placeholder="Ex: Jour 1 - Arrivée à Rome">
-        <input type="date" id="new-day-date">
-        <button onclick="addDay()">+ Ajouter ce jour</button>
+    <!-- Section 1 : Configuration initiale -->
+    <div id="setup-section">
+        <h2>Nouvelles vacances</h2>
+        <p>Sélectionnez les dates de votre séjour :</p>
+        <div class="date-inputs">
+            <div>
+                <label>Date de début</label>
+                <input type="date" id="start-date">
+            </div>
+            <div>
+                <label>Date de fin</label>
+                <input type="date" id="end-date">
+            </div>
+        </div>
+        <button onclick="generateCalendar()">Créer le calendrier</button>
     </div>
 
-    <!-- Conteneur où les jours s'afficheront -->
-    <div id="days-container"></div>
+    <!-- Section 2 : Le Calendrier -->
+    <div id="calendar-section" style="display: none;">
+        <div id="calendar-header">
+            <h2 id="trip-dates-display">Mes Vacances</h2>
+            <button class="btn-outline" onclick="resetTrip()">Nouveau voyage</button>
+        </div>
+        <div class="calendar-grid" id="calendar-grid">
+            <!-- Les jours seront générés ici -->
+        </div>
+    </div>
 </div>
 
-<script>
-    // Récupérer les données sauvegardées ou créer un tableau vide
-    let days = JSON.parse(localStorage.getItem('vacationDays')) || [];
+<!-- Fenêtre modale pour modifier un jour -->
+<dialog id="day-modal">
+    <div class="modal-header">
+        <h2 id="modal-date-title">Date</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    
+    <h3>Activités</h3>
+    <ul class="activity-list" id="modal-activities"></ul>
+    <div class="activity-input-group">
+        <input type="text" id="new-activity-input" placeholder="Ex: Visite du musée" onkeypress="if(event.key === 'Enter') addActivity()">
+        <button onclick="addActivity()">Ajouter</button>
+    </div>
 
-    // Fonction pour sauvegarder et mettre à jour l'affichage
-    function saveAndRender() {
-        localStorage.setItem('vacationDays', JSON.stringify(days));
-        renderDays();
+    <h3>Notes du jour</h3>
+    <textarea id="modal-notes" placeholder="Adresses, numéros de réservation, idées..."></textarea>
+    
+    <div style="text-align: right;">
+        <button onclick="saveNotes()">Enregistrer les notes</button>
+    </div>
+</dialog>
+
+<script>
+    // Variables globales
+    let tripData = JSON.parse(localStorage.getItem('vacationCalendarApp')) || null;
+    let currentEditingDate = null;
+    const modal = document.getElementById('day-modal');
+
+    // Initialisation au chargement
+    function init() {
+        if (tripData && tripData.startDate && tripData.endDate) {
+            document.getElementById('setup-section').style.display = 'none';
+            document.getElementById('calendar-section').style.display = 'block';
+            renderCalendar();
+        } else {
+            document.getElementById('setup-section').style.display = 'block';
+            document.getElementById('calendar-section').style.display = 'none';
+        }
     }
 
-    // Ajouter un nouveau jour
-    function addDay() {
-        const nameInput = document.getElementById('new-day-name');
-        const dateInput = document.getElementById('new-day-date');
-        
-        if (nameInput.value.trim() === '') {
-            alert('Veuillez entrer un nom pour ce jour (ex: Jour 1).');
+    // Créer un nouveau calendrier
+    function generateCalendar() {
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+
+        if (!start || !end) {
+            alert('Veuillez sélectionner une date de début et de fin.');
+            return;
+        }
+        if (new Date(start) > new Date(end)) {
+            alert('La date de fin doit être après la date de début.');
             return;
         }
 
-        days.push({
-            id: Date.now(), // Identifiant unique
-            name: nameInput.value,
-            date: dateInput.value,
-            activities: []
-        });
+        tripData = {
+            startDate: start,
+            endDate: end,
+            days: {} // Stockera les activités et notes par date
+        };
         
-        nameInput.value = '';
-        dateInput.value = '';
-        saveAndRender();
+        saveData();
+        init();
     }
 
-    // Supprimer un jour entier
-    function deleteDay(id) {
-        if(confirm("Êtes-vous sûr de vouloir supprimer ce jour et toutes ses activités ?")) {
-            days = days.filter(day => day.id !== id);
-            saveAndRender();
+    // Réinitialiser (Supprimer le voyage actuel)
+    function resetTrip() {
+        if(confirm('Attention, cela effacera toutes les activités de ce voyage. Continuer ?')) {
+            tripData = null;
+            saveData();
+            init();
         }
     }
 
-    // Ajouter une activité à un jour spécifique
-    function addActivity(dayId) {
-        const input = document.getElementById(`activity-input-${dayId}`);
-        if (input.value.trim() === '') return;
+    // Afficher la grille du calendrier
+    function renderCalendar() {
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+        
+        let currentDate = new Date(tripData.startDate);
+        const endDate = new Date(tripData.endDate);
 
-        const day = days.find(d => d.id === dayId);
-        day.activities.push({
-            id: Date.now(),
-            text: input.value
-        });
-        saveAndRender();
-    }
+        // Afficher les dates dans l'en-tête
+        const dateOptions = { day: 'numeric', month: 'short' };
+        document.getElementById('trip-dates-display').innerText = 
+            `Du ${currentDate.toLocaleDateString('fr-FR', dateOptions)} au ${endDate.toLocaleDateString('fr-FR', dateOptions)}`;
 
-    // Supprimer une activité
-    function deleteActivity(dayId, activityId) {
-        const day = days.find(d => d.id === dayId);
-        day.activities = day.activities.filter(a => a.id !== activityId);
-        saveAndRender();
-    }
-
-    // Afficher les jours sur la page
-    function renderDays() {
-        const container = document.getElementById('days-container');
-        container.innerHTML = '';
-
-        // Trier les jours par date s'ils en ont une
-        days.sort((a, b) => {
-            if (!a.date) return 1;
-            if (!b.date) return -1;
-            return new Date(a.date) - new Date(b.date);
-        });
-
-        days.forEach(day => {
-            // Formater la date pour l'affichage (optionnel)
-            const dateStr = day.date 
-                ? `<span style="color:#7f8c8d; font-size:0.6em; margin-left:10px;">(${new Date(day.date).toLocaleDateString('fr-FR')})</span>` 
-                : '';
+        // Générer les cartes pour chaque jour
+        while (currentDate <= endDate) {
+            const dateString = currentDate.toISOString().split('T')[0];
+            const dayData = tripData.days[dateString] || { activities: [], notes: '' };
             
-            // Générer le code HTML des activités
-            let activitiesHtml = day.activities.map(act => `
-                <li class="activity-item">
-                    <span>${act.text}</span>
-                    <button class="delete-btn" onclick="deleteActivity(${day.id}, ${act.id})" title="Supprimer l'activité">X</button>
-                </li>
-            `).join('');
+            // Formatage de la date (ex: Lundi 12 Juil)
+            const displayDate = currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+            const capitalizedDate = displayDate.charAt(0).toUpperCase() + displayDate.slice(1);
 
-            // Créer la carte du jour
-            container.innerHTML += `
-                <div class="card">
-                    <div class="day-header">
-                        <div class="day-title">${day.name} ${dateStr}</div>
-                        <button class="delete-btn" onclick="deleteDay(${day.id})">Supprimer le jour</button>
-                    </div>
-                    <ul class="activity-list">
-                        ${activitiesHtml}
-                    </ul>
-                    <div class="add-activity-form">
-                        <input type="text" id="activity-input-${day.id}" placeholder="Nouvelle activité (ex: Visite du musée à 14h)" onkeypress="if(event.key === 'Enter') addActivity(${day.id})">
-                        <button onclick="addActivity(${day.id})">Ajouter</button>
-                    </div>
+            // Création du HTML de la carte
+            const card = document.createElement('div');
+            card.className = 'day-card';
+            card.onclick = () => openDayModal(dateString, capitalizedDate);
+            
+            // Aperçu des activités (max 4 pour ne pas surcharger la vue calendrier)
+            let previewHtml = '';
+            dayData.activities.slice(0, 4).forEach(act => {
+                previewHtml += `<div class="preview-activity">${act}</div>`;
+            });
+            if (dayData.activities.length > 4) {
+                previewHtml += `<div class="preview-activity"><em>+ ${dayData.activities.length - 4} autres...</em></div>`;
+            }
+
+            const notesIndicator = dayData.notes.trim() !== '' ? `<div class="has-notes">📝 Contient des notes</div>` : '';
+
+            card.innerHTML = `
+                <div class="day-date">${capitalizedDate}</div>
+                <div class="day-preview">
+                    ${previewHtml}
+                    ${notesIndicator}
                 </div>
             `;
-        });
+            
+            grid.appendChild(card);
+            
+            // Passer au jour suivant
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
     }
 
-    // Afficher au chargement de la page
-    renderDays();
+    // --- Gestion de la modale (Pop-up) ---
+
+    function openDayModal(dateString, displayDate) {
+        currentEditingDate = dateString;
+        document.getElementById('modal-date-title').innerText = displayDate;
+        
+        // S'assurer que le jour existe dans les données
+        if (!tripData.days[dateString]) {
+            tripData.days[dateString] = { activities: [], notes: '' };
+        }
+        
+        document.getElementById('modal-notes').value = tripData.days[dateString].notes;
+        renderModalActivities();
+        
+        modal.showModal();
+    }
+
+    function closeModal() {
+        modal.close();
+        renderCalendar(); // Mettre à jour l'affichage de la carte
+    }
+
+    function renderModalActivities() {
+        const list = document.getElementById('modal-activities');
+        const activities = tripData.days[currentEditingDate].activities;
+        
+        list.innerHTML = activities.map((act, index) => `
+            <li class="activity-item">
+                <span>${act}</span>
+                <button class="btn-danger btn-small" onclick="deleteActivity(${index})">X</button>
+            </li>
+        `).join('');
+    }
+
+    function addActivity() {
+        const input = document.getElementById('new-activity-input');
+        const text = input.value.trim();
+        if (text !== '') {
+            tripData.days[currentEditingDate].activities.push(text);
+            input.value = '';
+            saveData();
+            renderModalActivities();
+        }
+    }
+
+    function deleteActivity(index) {
+        tripData.days[currentEditingDate].activities.splice(index, 1);
+        saveData();
+        renderModalActivities();
+    }
+
+    function saveNotes() {
+        const notes = document.getElementById('modal-notes').value;
+        tripData.days[currentEditingDate].notes = notes;
+        saveData();
+        closeModal();
+    }
+
+    function saveData() {
+        localStorage.setItem('vacationCalendarApp', JSON.stringify(tripData));
+    }
+
+    // Lancer l'appli
+    init();
 </script>
 </body>
 </html>
