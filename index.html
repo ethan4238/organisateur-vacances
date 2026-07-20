@@ -3,349 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendrier de Vacances</title>
+    <title>Notre Calendrier de Vacances</title>
+    
+    <!-- Scripts Firebase (Version Compat pour une intégration simple) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
+        /* Design System Moderne */
         :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --bg: #f8f9fa;
-            --card-bg: #ffffff;
-            --border: #e2e8f0;
-            --tag-loc: #3498db;
-            --tag-vibe: #e67e22;
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --secondary: #EC4899;
+            --bg-gradient: linear-gradient(135deg, #f6f8fd 0%, #f1f5f9 100%);
+            --card-bg: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --tag-loc: #3B82F6;
+            --tag-vibe: #F59E0B;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
         body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background: var(--bg); 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background: var(--bg-gradient); 
             margin: 0; 
             padding: 20px; 
-            color: #333; 
-        }
-        .container { 
-            max-width: 1200px; 
-            margin: auto; 
-        }
-        h1 { 
-            text-align: center; 
-            color: var(--primary); 
-            margin-bottom: 30px;
-        }
-        
-        /* Section de configuration */
-        #setup-section {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            text-align: center;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .date-inputs {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        .date-inputs div {
-            display: flex;
-            flex-direction: column;
-            text-align: left;
-        }
-        input[type="date"], input[type="text"], textarea { 
-            padding: 10px; 
-            border: 1px solid var(--border); 
-            border-radius: 6px; 
-            font-family: inherit;
+            color: var(--text-main); 
+            min-height: 100vh;
         }
 
-        /* Section Calendrier */
-        #calendar-header {
+        .container { max-width: 1200px; margin: auto; }
+
+        .app-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
         }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-        }
-        .day-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 15px;
-            min-height: 150px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            flex-direction: column;
-        }
-        .day-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-            border-color: var(--secondary);
-        }
-        .day-date {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: var(--primary);
-            border-bottom: 2px solid var(--bg);
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-        }
-        
-        /* Tags dans le calendrier */
-        .card-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 12px;
-        }
-        .card-tag {
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.7em;
-            font-weight: bold;
-            color: white;
-        }
-        .card-tag.location { background: var(--tag-loc); }
-        .card-tag.vibe { background: var(--tag-vibe); }
 
-        .day-preview {
+        h1 { margin: 0; color: var(--primary); font-size: 2em; letter-spacing: -0.5px;}
+
+        /* Indicateur de synchronisation */
+        #sync-status {
             font-size: 0.9em;
-            flex: 1;
-        }
-        .preview-activity {
-            margin: 4px 0;
-            padding-left: 12px;
-            position: relative;
-        }
-        .preview-activity::before {
-            content: "•";
-            color: var(--secondary);
-            position: absolute;
-            left: 0;
             font-weight: bold;
-        }
-        .has-notes {
-            margin-top: 10px;
-            font-size: 0.85em;
-            color: #7f8c8d;
-            font-style: italic;
-        }
-
-        /* Modal (Pop-up) */
-        dialog {
-            border: none;
-            border-radius: 12px;
-            padding: 25px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        dialog::backdrop {
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(3px);
-        }
-        .modal-header {
+            color: #10B981; /* Vert */
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            gap: 8px;
         }
-        .modal-header h2 { margin: 0; color: var(--primary); }
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5em;
-            cursor: pointer;
-            color: #999;
+        .pulse {
+            width: 10px; height: 10px; background: #10B981; border-radius: 50%;
+            animation: pulse-animation 2s infinite;
         }
-        
-        /* Tags dans la modale */
-        .tag-section { margin-bottom: 15px; }
-        .tag-section h4 { margin: 0 0 8px 0; font-size: 0.9em; color: #7f8c8d; }
-        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-        .tag { 
-            padding: 6px 12px; 
-            border-radius: 20px; 
-            font-size: 0.85em; 
-            cursor: pointer; 
-            background: #e2e8f0;
-            color: #4a5568;
-            transition: all 0.2s;
-            user-select: none;
-        }
-        .tag.location.active { background: var(--tag-loc); color: white; box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3); }
-        .tag.vibe.active { background: var(--tag-vibe); color: white; box-shadow: 0 2px 4px rgba(230, 126, 34, 0.3); }
-        .tag:hover { filter: brightness(0.95); }
-
-        .activity-list { list-style: none; padding: 0; margin-bottom: 20px;}
-        .activity-item {
-            background: var(--bg);
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .activity-input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-        .activity-input-group input { flex: 1; }
-        textarea {
-            width: 100%;
-            box-sizing: border-box;
-            min-height: 100px;
-            resize: vertical;
-            margin-bottom: 15px;
-        }
+        @keyframes pulse-animation { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 
         /* Boutons */
         button { 
-            background: var(--secondary); 
-            color: white; 
-            border: none; 
-            padding: 10px 15px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: bold;
-            transition: opacity 0.2s;
+            background: var(--primary); color: white; border: none; padding: 10px 18px; 
+            border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95em;
+            transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
         }
-        button:hover { opacity: 0.9; }
-        .btn-danger { background: #e74c3c; }
-        .btn-small { padding: 4px 8px; font-size: 0.8em; }
-        .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--border); }
-        .btn-outline:hover { background: var(--bg); }
+        button:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-outline { background: white; color: var(--text-main); border: 1px solid var(--border); box-shadow: none; }
+        .btn-outline:hover { background: #F8FAFC; }
+        .btn-danger { background: #EF4444; padding: 6px 10px; font-size: 0.8em; box-shadow: none;}
+
+        input[type="date"], input[type="text"], input[type="time"], textarea { 
+            padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.95em;
+        }
+
+        #setup-section { background: var(--card-bg); padding: 40px; border-radius: 16px; box-shadow: var(--shadow); text-align: center; max-width: 500px; margin: 40px auto; }
+        .date-inputs { display: flex; gap: 20px; justify-content: center; margin: 30px 0; }
+        .date-inputs div { display: flex; flex-direction: column; text-align: left; flex: 1; }
+
+        #calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        
+        .day-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; min-height: 180px; cursor: pointer; display: flex; flex-direction: column; box-shadow: var(--shadow); transition: transform 0.2s; }
+        .day-card:hover { transform: translateY(-4px); border-color: #C7D2FE; }
+        
+        .day-date { font-size: 1.2em; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 15px; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; }
+        .card-tag { padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: 600; color: white;}
+        .card-tag.location { background: var(--tag-loc); } .card-tag.vibe { background: var(--tag-vibe); }
+
+        .day-preview { font-size: 0.95em; flex: 1; color: var(--text-muted); }
+        .preview-activity { margin: 8px 0; padding-left: 16px; position: relative; display: flex; align-items: flex-start;}
+        .preview-activity::before { content: ""; width: 6px; height: 6px; background: var(--secondary); border-radius: 50%; position: absolute; left: 0; top: 6px; }
+        .preview-time { font-weight: 700; color: var(--primary); margin-right: 8px; font-size: 0.85em; min-width: 45px; }
+        .has-notes { margin-top: 15px; font-size: 0.85em; color: var(--text-muted); background: #F1F5F9; padding: 6px 10px; border-radius: 6px;}
+
+        dialog { border: none; border-radius: 20px; padding: 30px; width: 95%; max-width: 600px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25); }
+        dialog::backdrop { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .close-btn { background: #F1F5F9; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2em; cursor: pointer; }
+        
+        .tag-section { margin-bottom: 20px; background: #F8FAFC; padding: 15px; border-radius: 12px;}
+        .tags-container { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tag { padding: 8px 16px; border-radius: 20px; font-size: 0.85em; font-weight: 500; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s;}
+        .tag.location.active { background: var(--tag-loc); color: white; border-color: var(--tag-loc); }
+        .tag.vibe.active { background: var(--tag-vibe); color: white; border-color: var(--tag-vibe); }
+
+        .activity-list { list-style: none; padding: 0; margin-bottom: 20px;}
+        .activity-item { background: #F8FAFC; padding: 12px 16px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; border: 1px solid var(--border);}
+        .activity-item-time { font-weight: 700; color: var(--primary); margin-right: 15px; min-width: 50px;}
+        .activity-item-text { flex: 1; font-weight: 500;}
+        .activity-input-group { display: flex; gap: 12px; margin-bottom: 30px; background: #F8FAFC; padding: 15px; border-radius: 12px;}
+        .activity-input-group input[type="text"] { flex: 1; }
+        textarea { width: 100%; box-sizing: border-box; min-height: 120px; resize: vertical; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🗓️ Mon Calendrier de Vacances</h1>
-    
-    <!-- Section 1 : Configuration initiale -->
-    <div id="setup-section">
-        <h2>Nouvelles vacances</h2>
-        <p>Sélectionnez les dates de votre séjour :</p>
-        <div class="date-inputs">
-            <div>
-                <label>Date de début</label>
-                <input type="date" id="start-date">
-            </div>
-            <div>
-                <label>Date de fin</label>
-                <input type="date" id="end-date">
-            </div>
+    <div class="app-header">
+        <h1>✈️ Notre Programme</h1>
+        <div id="sync-status">
+            <div class="pulse"></div>
+            En direct
         </div>
-        <button onclick="generateCalendar()">Créer le calendrier</button>
+    </div>
+    
+    <div id="setup-section" style="display: none;">
+        <h2>Préparer le voyage</h2>
+        <div class="date-inputs">
+            <div><label>Début</label><input type="date" id="start-date"></div>
+            <div><label>Fin</label><input type="date" id="end-date"></div>
+        </div>
+        <button style="width: 100%; padding: 15px;" onclick="generateCalendar()">Créer le calendrier</button>
     </div>
 
-    <!-- Section 2 : Le Calendrier -->
     <div id="calendar-section" style="display: none;">
         <div id="calendar-header">
-            <h2 id="trip-dates-display">Mes Vacances</h2>
+            <h2 id="trip-dates-display" style="margin: 0;">Mes Vacances</h2>
             <button class="btn-outline" onclick="resetTrip()">Nouveau voyage</button>
         </div>
-        <div class="calendar-grid" id="calendar-grid">
-            <!-- Les jours seront générés ici -->
-        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 </div>
 
-<!-- Fenêtre modale pour modifier un jour -->
 <dialog id="day-modal">
     <div class="modal-header">
         <h2 id="modal-date-title">Date</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
     </div>
     
-    <!-- Nouvelle section des Tags -->
-    <div class="tag-section">
-        <h4>📍 Lieux</h4>
-        <div class="tags-container" id="modal-locations"></div>
-    </div>
-    <div class="tag-section">
-        <h4>✨ Ambiance</h4>
-        <div class="tags-container" id="modal-vibes"></div>
-    </div>
+    <div class="tag-section"><h4>📍 Lieux</h4><div class="tags-container" id="modal-locations"></div></div>
+    <div class="tag-section"><h4>✨ Ambiance</h4><div class="tags-container" id="modal-vibes"></div></div>
 
-    <h3>Activités</h3>
+    <h3>Programme</h3>
     <ul class="activity-list" id="modal-activities"></ul>
+    
     <div class="activity-input-group">
-        <input type="text" id="new-activity-input" placeholder="Ex: Visite du musée" onkeypress="if(event.key === 'Enter') addActivity()">
+        <input type="time" id="new-activity-time">
+        <input type="text" id="new-activity-input" placeholder="Ex: Resto..." onkeypress="if(event.key === 'Enter') addActivity()">
         <button onclick="addActivity()">Ajouter</button>
     </div>
 
-    <h3>Notes du jour</h3>
-    <textarea id="modal-notes" placeholder="Adresses, numéros de réservation, idées..."></textarea>
-    
-    <div style="text-align: right;">
-        <button onclick="saveNotesAndClose()">Enregistrer</button>
-    </div>
+    <h3>Notes</h3>
+    <textarea id="modal-notes" placeholder="Adresses, numéros..."></textarea>
+    <div style="text-align: right;"><button onclick="saveNotesAndClose()">Enregistrer</button></div>
 </dialog>
 
 <script>
-    // Configuration des tags disponibles
-    const AVAILABLE_LOCATIONS = ["Lyon", "St Etienne", "Grenoble", "Montagne", "Annecy"];
-    const AVAILABLE_VIBES = ["Chill", "Dynamique", "Sportive", "Sociale", "Amoureux"];
+    // =========================================================================
+    // ⚠️ REMPLACE TOUT CE BLOC PAR LE CODE DONNÉ PAR FIREBASE À L'ÉTAPE 1
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnh656o6RrBmEw68KrW-wS8Z7B4HprbsE",
+      authDomain: "vacances-justine.firebaseapp.com",
+      databaseURL: "https://vacances-justine-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "vacances-justine",
+      storageBucket: "vacances-justine.firebasestorage.app",
+      messagingSenderId: "224749023339",
+      appId: "1:224749023339:web:d27c4cc48acfe19d3d812e",
+      measurementId: "G-P9WCN2Z2WL"
+    };
+    // =========================================================================
 
-    // Variables globales
-    let tripData = JSON.parse(localStorage.getItem('vacationCalendarApp')) || null;
+    // Initialisation de Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
+    // On crée une "table" qui s'appelle 'notre-voyage'
+    const tripRef = db.ref('notre-voyage');
+
+    const AVAILABLE_LOCATIONS = ["Lyon", "St Etienne", "Grenoble", "Montagne", "Annecy", "Mer", "Campagne"];
+    const AVAILABLE_VIBES = ["Chill 😌", "Dynamique 🏃", "Sportive 🧗", "Sociale 🥂", "Amoureux ❤️"];
+
+    let tripData = null;
     let currentEditingDate = null;
     const modal = document.getElementById('day-modal');
 
-    // Initialisation au chargement
-    function init() {
+    // ÉCOUTEUR TEMPS RÉEL : Dès que la base change, cette fonction se déclenche
+    tripRef.on('value', (snapshot) => {
+        tripData = snapshot.val();
+        initUI();
+    });
+
+    // Fonction pour sauvegarder vers Firebase (remplace le localStorage)
+    function saveData() {
+        tripRef.set(tripData);
+    }
+
+    // Affiche la bonne interface selon s'il y a des données ou non
+    function initUI() {
         if (tripData && tripData.startDate && tripData.endDate) {
             document.getElementById('setup-section').style.display = 'none';
             document.getElementById('calendar-section').style.display = 'block';
             renderCalendar();
+            
+            // Si la fenêtre est ouverte, on la met à jour en direct aussi
+            if(modal.open && currentEditingDate) {
+                document.getElementById('modal-notes').value = tripData.days[currentEditingDate]?.notes || '';
+                renderModalTags();
+                renderModalActivities();
+            }
         } else {
             document.getElementById('setup-section').style.display = 'block';
             document.getElementById('calendar-section').style.display = 'none';
         }
     }
 
-    // Créer un nouveau calendrier
     function generateCalendar() {
         const start = document.getElementById('start-date').value;
         const end = document.getElementById('end-date').value;
 
-        if (!start || !end) {
-            alert('Veuillez sélectionner une date de début et de fin.');
-            return;
-        }
-        if (new Date(start) > new Date(end)) {
-            alert('La date de fin doit être après la date de début.');
-            return;
-        }
+        if (!start || !end) return alert('Sélectionnez les dates.');
+        if (new Date(start) > new Date(end)) return alert('Ordre des dates invalide.');
 
-        tripData = {
-            startDate: start,
-            endDate: end,
-            days: {}
-        };
-        
-        saveData();
-        init();
+        tripData = { startDate: start, endDate: end, days: {} };
+        saveData(); // Envoie à Firebase
     }
 
-    // Réinitialiser (Supprimer le voyage actuel)
     function resetTrip() {
-        if(confirm('Attention, cela effacera toutes les activités de ce voyage. Continuer ?')) {
+        if(confirm('Attention, cela effacera tout. Continuer ?')) {
             tripData = null;
             saveData();
-            init();
         }
     }
 
-    // Afficher la grille du calendrier
     function renderCalendar() {
         const grid = document.getElementById('calendar-grid');
         grid.innerHTML = '';
@@ -353,15 +256,12 @@
         let currentDate = new Date(tripData.startDate);
         const endDate = new Date(tripData.endDate);
 
-        const dateOptions = { day: 'numeric', month: 'short' };
         document.getElementById('trip-dates-display').innerText = 
-            `Du ${currentDate.toLocaleDateString('fr-FR', dateOptions)} au ${endDate.toLocaleDateString('fr-FR', dateOptions)}`;
+            `Du ${currentDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} au ${endDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
 
         while (currentDate <= endDate) {
             const dateString = currentDate.toISOString().split('T')[0];
-            
-            // Assurer la rétrocompatibilité si des données existent sans tags
-            const dayData = tripData.days[dateString] || { activities: [], notes: '', tags: { locations: [], vibes: [] } };
+            const dayData = tripData.days?.[dateString] || { activities: [], notes: '', tags: { locations: [], vibes: [] } };
             if(!dayData.tags) dayData.tags = { locations: [], vibes: [] };
 
             const displayDate = currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
@@ -371,29 +271,28 @@
             card.className = 'day-card';
             card.onclick = () => openDayModal(dateString, capitalizedDate);
             
-            // Générer le HTML des tags pour la carte
             let tagsHtml = '<div class="card-tags">';
-            dayData.tags.locations.forEach(loc => { tagsHtml += `<span class="card-tag location">${loc}</span>`; });
-            dayData.tags.vibes.forEach(vibe => { tagsHtml += `<span class="card-tag vibe">${vibe}</span>`; });
+            if(dayData.tags.locations) dayData.tags.locations.forEach(loc => { tagsHtml += `<span class="card-tag location">${loc}</span>`; });
+            if(dayData.tags.vibes) dayData.tags.vibes.forEach(vibe => { tagsHtml += `<span class="card-tag vibe">${vibe}</span>`; });
             tagsHtml += '</div>';
 
             let previewHtml = '';
-            dayData.activities.slice(0, 4).forEach(act => {
-                previewHtml += `<div class="preview-activity">${act}</div>`;
-            });
-            if (dayData.activities.length > 4) {
-                previewHtml += `<div class="preview-activity"><em>+ ${dayData.activities.length - 4} autres...</em></div>`;
+            if(dayData.activities) {
+                dayData.activities.slice(0, 3).forEach(act => {
+                    const timeStr = act.time ? `<span class="preview-time">${act.time}</span>` : '';
+                    previewHtml += `<div class="preview-activity">${timeStr}<span>${act.text}</span></div>`;
+                });
+                if (dayData.activities.length > 3) {
+                    previewHtml += `<div class="preview-activity" style="color:var(--primary); font-weight:600; font-size:0.85em;">+ ${dayData.activities.length - 3} autres...</div>`;
+                }
             }
 
-            const notesIndicator = dayData.notes.trim() !== '' ? `<div class="has-notes">📝 Contient des notes</div>` : '';
+            const notesIndicator = (dayData.notes && dayData.notes.trim() !== '') ? `<div class="has-notes">📝 Notes ajoutées</div>` : '';
 
             card.innerHTML = `
                 <div class="day-date">${capitalizedDate}</div>
-                ${dayData.tags.locations.length > 0 || dayData.tags.vibes.length > 0 ? tagsHtml : ''}
-                <div class="day-preview">
-                    ${previewHtml}
-                    ${notesIndicator}
-                </div>
+                ${(dayData.tags.locations?.length > 0 || dayData.tags.vibes?.length > 0) ? tagsHtml : ''}
+                <div class="day-preview">${previewHtml}${notesIndicator}</div>
             `;
             
             grid.appendChild(card);
@@ -401,103 +300,102 @@
         }
     }
 
-    // --- Gestion de la modale ---
-
     function openDayModal(dateString, displayDate) {
         currentEditingDate = dateString;
         document.getElementById('modal-date-title').innerText = displayDate;
         
+        if (!tripData.days) tripData.days = {};
         if (!tripData.days[dateString]) {
             tripData.days[dateString] = { activities: [], notes: '', tags: { locations: [], vibes: [] } };
-        } else if (!tripData.days[dateString].tags) {
-            tripData.days[dateString].tags = { locations: [], vibes: [] };
         }
         
-        document.getElementById('modal-notes').value = tripData.days[dateString].notes;
+        document.getElementById('modal-notes').value = tripData.days[dateString].notes || '';
         renderModalTags();
         renderModalActivities();
-        
         modal.showModal();
     }
 
     function closeModal() {
         modal.close();
-        renderCalendar();
+        currentEditingDate = null;
     }
 
-    // Affichage et gestion des clics sur les tags
     function renderModalTags() {
-        const dayTags = tripData.days[currentEditingDate].tags;
+        const dayTags = tripData.days[currentEditingDate].tags || { locations: [], vibes: [] };
         
-        const locContainer = document.getElementById('modal-locations');
-        locContainer.innerHTML = AVAILABLE_LOCATIONS.map(loc => {
-            const isActive = dayTags.locations.includes(loc);
+        document.getElementById('modal-locations').innerHTML = AVAILABLE_LOCATIONS.map(loc => {
+            const isActive = dayTags.locations && dayTags.locations.includes(loc);
             return `<span class="tag location ${isActive ? 'active' : ''}" onclick="toggleTag('locations', '${loc}')">${loc}</span>`;
         }).join('');
 
-        const vibeContainer = document.getElementById('modal-vibes');
-        vibeContainer.innerHTML = AVAILABLE_VIBES.map(vibe => {
-            const isActive = dayTags.vibes.includes(vibe);
+        document.getElementById('modal-vibes').innerHTML = AVAILABLE_VIBES.map(vibe => {
+            const isActive = dayTags.vibes && dayTags.vibes.includes(vibe);
             return `<span class="tag vibe ${isActive ? 'active' : ''}" onclick="toggleTag('vibes', '${vibe}')">${vibe}</span>`;
         }).join('');
     }
 
     function toggleTag(category, value) {
+        if (!tripData.days[currentEditingDate].tags) tripData.days[currentEditingDate].tags = { locations: [], vibes: [] };
+        if (!tripData.days[currentEditingDate].tags[category]) tripData.days[currentEditingDate].tags[category] = [];
+        
         const arr = tripData.days[currentEditingDate].tags[category];
         const index = arr.indexOf(value);
+        if (index > -1) arr.splice(index, 1);
+        else arr.push(value);
         
-        if (index > -1) {
-            arr.splice(index, 1); // Enlever si déjà présent
-        } else {
-            arr.push(value); // Ajouter si non présent
-        }
-        
-        saveData();
-        renderModalTags(); // Rafraîchir les couleurs dans la modale
+        saveData(); // Envoie la modif à Firebase
     }
 
-    // Gestion des activités et notes
+    function sortActivities() {
+        if(!tripData.days[currentEditingDate].activities) return;
+        tripData.days[currentEditingDate].activities.sort((a, b) => {
+            if (!a.time && !b.time) return 0;
+            if (!a.time) return 1;
+            if (!b.time) return -1;
+            return a.time.localeCompare(b.time);
+        });
+    }
+
     function renderModalActivities() {
-        const list = document.getElementById('modal-activities');
-        const activities = tripData.days[currentEditingDate].activities;
-        
-        list.innerHTML = activities.map((act, index) => `
+        const activities = tripData.days[currentEditingDate].activities || [];
+        document.getElementById('modal-activities').innerHTML = activities.map((act, index) => {
+            const timeStr = act.time ? `<span class="activity-item-time">${act.time}</span>` : '';
+            return `
             <li class="activity-item">
-                <span>${act}</span>
-                <button class="btn-danger btn-small" onclick="deleteActivity(${index})">X</button>
-            </li>
-        `).join('');
+                ${timeStr}
+                <span class="activity-item-text">${act.text}</span>
+                <button class="btn-danger" onclick="deleteActivity(${index})">✕</button>
+            </li>`;
+        }).join('');
     }
 
     function addActivity() {
-        const input = document.getElementById('new-activity-input');
-        const text = input.value.trim();
+        const textInput = document.getElementById('new-activity-input');
+        const timeInput = document.getElementById('new-activity-time');
+        const text = textInput.value.trim();
+        const time = timeInput.value;
+
         if (text !== '') {
-            tripData.days[currentEditingDate].activities.push(text);
-            input.value = '';
-            saveData();
-            renderModalActivities();
+            if(!tripData.days[currentEditingDate].activities) tripData.days[currentEditingDate].activities = [];
+            tripData.days[currentEditingDate].activities.push({ text: text, time: time });
+            sortActivities();
+            
+            textInput.value = '';
+            timeInput.value = '';
+            saveData(); // Envoie à Firebase
         }
     }
 
     function deleteActivity(index) {
         tripData.days[currentEditingDate].activities.splice(index, 1);
         saveData();
-        renderModalActivities();
     }
 
     function saveNotesAndClose() {
-        const notes = document.getElementById('modal-notes').value;
-        tripData.days[currentEditingDate].notes = notes;
+        tripData.days[currentEditingDate].notes = document.getElementById('modal-notes').value;
         saveData();
         closeModal();
     }
-
-    function saveData() {
-        localStorage.setItem('vacationCalendarApp', JSON.stringify(tripData));
-    }
-
-    init();
 </script>
 </body>
 </html>
