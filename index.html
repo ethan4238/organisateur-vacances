@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notre Calendrier de Vacances</title>
     
-    <!-- Scripts Firebase (Version Compat pour une intégration simple) -->
+    <!-- Scripts Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -34,27 +34,82 @@
             min-height: 100vh;
         }
 
+        /* --- PAGE DE CONNEXION --- */
+        #login-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+            text-align: center;
+        }
+        
+        .login-title {
+            font-size: 2.8em;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+        
+        .login-subtitle {
+            font-size: 1.2em;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+
+        .login-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 40px;
+            max-width: 500px;
+        }
+
+        .login-images img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+        }
+        
+        .login-images img:hover {
+            transform: scale(1.05);
+        }
+
+        .login-box {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .login-box input {
+            text-align: center;
+            font-size: 1.1em;
+            padding: 15px;
+        }
+
+        /* --- APPLICATION PRINCIPALE --- */
+        #app-section { display: none; } /* Caché par défaut */
+        
         .container { max-width: 1200px; margin: auto; }
 
         .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid var(--border);
         }
-
         h1 { margin: 0; color: var(--primary); font-size: 2em; letter-spacing: -0.5px;}
 
-        /* Indicateur de synchronisation */
         #sync-status {
-            font-size: 0.9em;
-            font-weight: bold;
-            color: #10B981; /* Vert */
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 0.9em; font-weight: bold; color: #10B981; display: flex; align-items: center; gap: 8px;
         }
         .pulse {
             width: 10px; height: 10px; background: #10B981; border-radius: 50%;
@@ -62,7 +117,6 @@
         }
         @keyframes pulse-animation { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 
-        /* Boutons */
         button { 
             background: var(--primary); color: white; border: none; padding: 10px 18px; 
             border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95em;
@@ -73,7 +127,7 @@
         .btn-outline:hover { background: #F8FAFC; }
         .btn-danger { background: #EF4444; padding: 6px 10px; font-size: 0.8em; box-shadow: none;}
 
-        input[type="date"], input[type="text"], input[type="time"], textarea { 
+        input[type="date"], input[type="text"], input[type="password"], input[type="time"], textarea { 
             padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.95em;
         }
 
@@ -121,30 +175,50 @@
 </head>
 <body>
 
-<div class="container">
-    <div class="app-header">
-        <h1>✈️ Notre Programme</h1>
-        <div id="sync-status">
-            <div class="pulse"></div>
-            En direct
-        </div>
-    </div>
+<!-- === PAGE DE CONNEXION === -->
+<div id="login-section">
+    <div class="login-title">🌴 Nos Vacances ✨</div>
+    <div class="login-subtitle">Préparez vos bagages, on décolle !</div>
     
-    <div id="setup-section" style="display: none;">
-        <h2>Préparer le voyage</h2>
-        <div class="date-inputs">
-            <div><label>Début</label><input type="date" id="start-date"></div>
-            <div><label>Fin</label><input type="date" id="end-date"></div>
-        </div>
-        <button style="width: 100%; padding: 15px;" onclick="generateCalendar()">Créer le calendrier</button>
+    <div class="login-images">
+        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80" alt="Plage paradisiaque">
+        <img src="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=400&q=80" alt="Coucher de soleil sur la mer">
+        <img src="https://images.unsplash.com/photo-1516483638261-f4085ee6b633?w=400&q=80" alt="Village italien de vacances">
+        <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&q=80" alt="Montagne et lac">
     </div>
 
-    <div id="calendar-section" style="display: none;">
-        <div id="calendar-header">
-            <h2 id="trip-dates-display" style="margin: 0;">Mes Vacances</h2>
-            <button class="btn-outline" onclick="resetTrip()">Nouveau voyage</button>
+    <div class="login-box">
+        <input type="password" id="password-input" placeholder="Mot de passe..." onkeypress="if(event.key === 'Enter') checkPassword()">
+        <button onclick="checkPassword()">Ouvrir le carnet</button>
+    </div>
+</div>
+
+<!-- === APPLICATION PRINCIPALE === -->
+<div id="app-section">
+    <div class="container">
+        <div class="app-header">
+            <h1>✈️ Notre Programme</h1>
+            <div id="sync-status">
+                <div class="pulse"></div> En direct
+            </div>
         </div>
-        <div class="calendar-grid" id="calendar-grid"></div>
+        
+        <div id="setup-section" style="display: none;">
+            <h2>Préparer le voyage</h2>
+            <div class="date-inputs">
+                <div><label>Début</label><input type="date" id="start-date"></div>
+                <div><label>Fin</label><input type="date" id="end-date"></div>
+            </div>
+            <button style="width: 100%; padding: 15px;" onclick="generateCalendar()">Créer le calendrier</button>
+        </div>
+
+        <div id="calendar-section" style="display: none;">
+            <div id="calendar-header">
+                <h2 id="trip-dates-display" style="margin: 0;">Mes Vacances</h2>
+                <button class="btn-outline" onclick="resetTrip()">Nouveau voyage</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
     </div>
 </div>
 
@@ -172,54 +246,75 @@
 </dialog>
 
 <script>
-    // =========================================================================
-    // ⚠️ REMPLACE TOUT CE BLOC PAR LE CODE DONNÉ PAR FIREBASE À L'ÉTAPE 1
-    // =========================================================================
-    const firebaseConfig = {
-      apiKey: "AIzaSyDnh656o6RrBmEw68KrW-wS8Z7B4HprbsE",
-      authDomain: "vacances-justine.firebaseapp.com",
-      databaseURL: "https://vacances-justine-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "vacances-justine",
-      storageBucket: "vacances-justine.firebasestorage.app",
-      messagingSenderId: "224749023339",
-      appId: "1:224749023339:web:d27c4cc48acfe19d3d812e",
-      measurementId: "G-P9WCN2Z2WL"
+    // --- GESTION DU MOT DE PASSE ---
+    function checkPassword() {
+        const input = document.getElementById('password-input').value;
+        if (input === '20/06/2026') {
+            localStorage.setItem('vacationAuth', 'true');
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'block';
+            connectFirebase();
+        } else {
+            alert('Mot de passe incorrect 🌴 Essayez encore !');
+            document.getElementById('password-input').value = '';
+        }
+    }
+
+    // Vérification au chargement de la page
+    window.onload = () => {
+        if (localStorage.getItem('vacationAuth') === 'true') {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'block';
+            connectFirebase();
+        }
     };
-    // =========================================================================
 
-    // Initialisation de Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    // On crée une "table" qui s'appelle 'notre-voyage'
-    const tripRef = db.ref('notre-voyage');
 
-    const AVAILABLE_LOCATIONS = ["Lyon", "St Etienne", "Grenoble", "Montagne", "Annecy", "Mer", "Campagne"];
-    const AVAILABLE_VIBES = ["Chill 😌", "Dynamique 🏃", "Sportive 🧗", "Sociale 🥂", "Amoureux ❤️"];
-
+    // --- INITIALISATION FIREBASE ---
+    let tripRef = null;
     let tripData = null;
     let currentEditingDate = null;
     const modal = document.getElementById('day-modal');
 
-    // ÉCOUTEUR TEMPS RÉEL : Dès que la base change, cette fonction se déclenche
-    tripRef.on('value', (snapshot) => {
-        tripData = snapshot.val();
-        initUI();
-    });
+    function connectFirebase() {
+        const firebaseConfig = {
+            apiKey: "AIzaSyDnh656o6RrBmEw68KrW-wS8Z7B4HprbsE",
+            authDomain: "vacances-justine.firebaseapp.com",
+            databaseURL: "https://vacances-justine-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "vacances-justine",
+            storageBucket: "vacances-justine.firebasestorage.app",
+            messagingSenderId: "224749023339",
+            appId: "1:224749023339:web:d27c4cc48acfe19d3d812e",
+            measurementId: "G-P9WCN2Z2WL"
+        };
 
-    // Fonction pour sauvegarder vers Firebase (remplace le localStorage)
-    function saveData() {
-        tripRef.set(tripData);
+        // Sécurité pour ne pas initialiser Firebase en double
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+        tripRef = db.ref('notre-voyage');
+
+        // Lancer l'écoute en direct
+        tripRef.on('value', (snapshot) => {
+            tripData = snapshot.val();
+            initUI();
+        });
     }
 
-    // Affiche la bonne interface selon s'il y a des données ou non
+    const AVAILABLE_LOCATIONS = ["Lyon", "St Etienne", "Grenoble", "Montagne", "Annecy", "Mer", "Campagne"];
+    const AVAILABLE_VIBES = ["Chill 😌", "Dynamique 🏃", "Sportive 🧗", "Sociale 🥂", "Amoureux ❤️"];
+
+    function saveData() {
+        if (tripRef) tripRef.set(tripData);
+    }
+
     function initUI() {
         if (tripData && tripData.startDate && tripData.endDate) {
             document.getElementById('setup-section').style.display = 'none';
             document.getElementById('calendar-section').style.display = 'block';
             renderCalendar();
             
-            // Si la fenêtre est ouverte, on la met à jour en direct aussi
             if(modal.open && currentEditingDate) {
                 document.getElementById('modal-notes').value = tripData.days[currentEditingDate]?.notes || '';
                 renderModalTags();
@@ -234,12 +329,10 @@
     function generateCalendar() {
         const start = document.getElementById('start-date').value;
         const end = document.getElementById('end-date').value;
-
         if (!start || !end) return alert('Sélectionnez les dates.');
         if (new Date(start) > new Date(end)) return alert('Ordre des dates invalide.');
-
         tripData = { startDate: start, endDate: end, days: {} };
-        saveData(); // Envoie à Firebase
+        saveData();
     }
 
     function resetTrip() {
@@ -343,7 +436,7 @@
         if (index > -1) arr.splice(index, 1);
         else arr.push(value);
         
-        saveData(); // Envoie la modif à Firebase
+        saveData();
     }
 
     function sortActivities() {
@@ -382,7 +475,7 @@
             
             textInput.value = '';
             timeInput.value = '';
-            saveData(); // Envoie à Firebase
+            saveData();
         }
     }
 
