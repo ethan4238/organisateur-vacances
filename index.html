@@ -29,7 +29,7 @@
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
             background: var(--bg-gradient); 
             margin: 0; 
-            padding: 0; /* Enlevé pour que le fond prenne tout l'écran */
+            padding: 0; 
             color: var(--text-main); 
             min-height: 100vh;
         }
@@ -44,9 +44,7 @@
             text-align: center;
             position: relative;
             
-            /* ========================================================
-               🌅 MODIFIE LE NOM DE L'IMAGE ICI (actuellement 'fond.jpg')
-               ======================================================== */
+            /* L'image de fond (à placer dans le même dossier sur GitHub) */
             background-image: url('fond.jpg'); 
             
             background-size: cover;
@@ -58,13 +56,13 @@
             content: "";
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.3); /* Ajuste le 0.3 pour rendre plus ou moins sombre */
+            background: rgba(0, 0, 0, 0.3); 
             z-index: 1;
         }
         
         .login-content {
             position: relative;
-            z-index: 2; /* Pour passer au-dessus du voile sombre */
+            z-index: 2; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -91,8 +89,8 @@
         }
 
         .login-box {
-            background: rgba(255, 255, 255, 0.85); /* Fond blanc semi-transparent */
-            backdrop-filter: blur(12px); /* Effet verre dépoli */
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(12px); 
             -webkit-backdrop-filter: blur(12px);
             padding: 40px 30px;
             border-radius: 24px;
@@ -127,7 +125,7 @@
 
         /* --- APPLICATION PRINCIPALE --- */
         #app-section { 
-            display: none; /* Caché par défaut */
+            display: none; 
             padding: 20px; 
         } 
         
@@ -280,7 +278,6 @@
     function checkPassword() {
         const input = document.getElementById('password-input').value;
         if (input === '20/06/2026') {
-            localStorage.setItem('vacationAuth', 'true');
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('app-section').style.display = 'block';
             connectFirebase();
@@ -289,16 +286,6 @@
             document.getElementById('password-input').value = '';
         }
     }
-
-    // Vérification au chargement de la page
-    window.onload = () => {
-        if (localStorage.getItem('vacationAuth') === 'true') {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('app-section').style.display = 'block';
-            connectFirebase();
-        }
-    };
-
 
     // --- INITIALISATION FIREBASE ---
     let tripRef = null;
@@ -318,14 +305,12 @@
             measurementId: "G-P9WCN2Z2WL"
         };
 
-        // Sécurité pour ne pas initialiser Firebase en double
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
         tripRef = db.ref('notre-voyage');
 
-        // Lancer l'écoute en direct
         tripRef.on('value', (snapshot) => {
             tripData = snapshot.val();
             initUI();
