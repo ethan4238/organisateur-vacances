@@ -11,6 +11,8 @@
             --bg: #f8f9fa;
             --card-bg: #ffffff;
             --border: #e2e8f0;
+            --tag-loc: #3498db;
+            --tag-vibe: #e67e22;
         }
         body { 
             font-family: 'Segoe UI', system-ui, sans-serif; 
@@ -93,6 +95,24 @@
             padding-bottom: 8px;
             margin-bottom: 10px;
         }
+        
+        /* Tags dans le calendrier */
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 12px;
+        }
+        .card-tag {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: bold;
+            color: white;
+        }
+        .card-tag.location { background: var(--tag-loc); }
+        .card-tag.vibe { background: var(--tag-vibe); }
+
         .day-preview {
             font-size: 0.9em;
             flex: 1;
@@ -143,6 +163,25 @@
             cursor: pointer;
             color: #999;
         }
+        
+        /* Tags dans la modale */
+        .tag-section { margin-bottom: 15px; }
+        .tag-section h4 { margin: 0 0 8px 0; font-size: 0.9em; color: #7f8c8d; }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .tag { 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 0.85em; 
+            cursor: pointer; 
+            background: #e2e8f0;
+            color: #4a5568;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .tag.location.active { background: var(--tag-loc); color: white; box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3); }
+        .tag.vibe.active { background: var(--tag-vibe); color: white; box-shadow: 0 2px 4px rgba(230, 126, 34, 0.3); }
+        .tag:hover { filter: brightness(0.95); }
+
         .activity-list { list-style: none; padding: 0; margin-bottom: 20px;}
         .activity-item {
             background: var(--bg);
@@ -226,6 +265,16 @@
         <button class="close-btn" onclick="closeModal()">&times;</button>
     </div>
     
+    <!-- Nouvelle section des Tags -->
+    <div class="tag-section">
+        <h4>📍 Lieux</h4>
+        <div class="tags-container" id="modal-locations"></div>
+    </div>
+    <div class="tag-section">
+        <h4>✨ Ambiance</h4>
+        <div class="tags-container" id="modal-vibes"></div>
+    </div>
+
     <h3>Activités</h3>
     <ul class="activity-list" id="modal-activities"></ul>
     <div class="activity-input-group">
@@ -237,11 +286,15 @@
     <textarea id="modal-notes" placeholder="Adresses, numéros de réservation, idées..."></textarea>
     
     <div style="text-align: right;">
-        <button onclick="saveNotes()">Enregistrer les notes</button>
+        <button onclick="saveNotesAndClose()">Enregistrer</button>
     </div>
 </dialog>
 
 <script>
+    // Configuration des tags disponibles
+    const AVAILABLE_LOCATIONS = ["Lyon", "St Etienne", "Grenoble", "Montagne", "Annecy"];
+    const AVAILABLE_VIBES = ["Chill", "Dynamique", "Sportive", "Sociale", "Amoureux"];
+
     // Variables globales
     let tripData = JSON.parse(localStorage.getItem('vacationCalendarApp')) || null;
     let currentEditingDate = null;
@@ -276,7 +329,7 @@
         tripData = {
             startDate: start,
             endDate: end,
-            days: {} // Stockera les activités et notes par date
+            days: {}
         };
         
         saveData();
@@ -300,26 +353,30 @@
         let currentDate = new Date(tripData.startDate);
         const endDate = new Date(tripData.endDate);
 
-        // Afficher les dates dans l'en-tête
         const dateOptions = { day: 'numeric', month: 'short' };
         document.getElementById('trip-dates-display').innerText = 
             `Du ${currentDate.toLocaleDateString('fr-FR', dateOptions)} au ${endDate.toLocaleDateString('fr-FR', dateOptions)}`;
 
-        // Générer les cartes pour chaque jour
         while (currentDate <= endDate) {
             const dateString = currentDate.toISOString().split('T')[0];
-            const dayData = tripData.days[dateString] || { activities: [], notes: '' };
             
-            // Formatage de la date (ex: Lundi 12 Juil)
+            // Assurer la rétrocompatibilité si des données existent sans tags
+            const dayData = tripData.days[dateString] || { activities: [], notes: '', tags: { locations: [], vibes: [] } };
+            if(!dayData.tags) dayData.tags = { locations: [], vibes: [] };
+
             const displayDate = currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
             const capitalizedDate = displayDate.charAt(0).toUpperCase() + displayDate.slice(1);
 
-            // Création du HTML de la carte
             const card = document.createElement('div');
             card.className = 'day-card';
             card.onclick = () => openDayModal(dateString, capitalizedDate);
             
-            // Aperçu des activités (max 4 pour ne pas surcharger la vue calendrier)
+            // Générer le HTML des tags pour la carte
+            let tagsHtml = '<div class="card-tags">';
+            dayData.tags.locations.forEach(loc => { tagsHtml += `<span class="card-tag location">${loc}</span>`; });
+            dayData.tags.vibes.forEach(vibe => { tagsHtml += `<span class="card-tag vibe">${vibe}</span>`; });
+            tagsHtml += '</div>';
+
             let previewHtml = '';
             dayData.activities.slice(0, 4).forEach(act => {
                 previewHtml += `<div class="preview-activity">${act}</div>`;
@@ -332,6 +389,7 @@
 
             card.innerHTML = `
                 <div class="day-date">${capitalizedDate}</div>
+                ${dayData.tags.locations.length > 0 || dayData.tags.vibes.length > 0 ? tagsHtml : ''}
                 <div class="day-preview">
                     ${previewHtml}
                     ${notesIndicator}
@@ -339,24 +397,24 @@
             `;
             
             grid.appendChild(card);
-            
-            // Passer au jour suivant
             currentDate.setDate(currentDate.getDate() + 1);
         }
     }
 
-    // --- Gestion de la modale (Pop-up) ---
+    // --- Gestion de la modale ---
 
     function openDayModal(dateString, displayDate) {
         currentEditingDate = dateString;
         document.getElementById('modal-date-title').innerText = displayDate;
         
-        // S'assurer que le jour existe dans les données
         if (!tripData.days[dateString]) {
-            tripData.days[dateString] = { activities: [], notes: '' };
+            tripData.days[dateString] = { activities: [], notes: '', tags: { locations: [], vibes: [] } };
+        } else if (!tripData.days[dateString].tags) {
+            tripData.days[dateString].tags = { locations: [], vibes: [] };
         }
         
         document.getElementById('modal-notes').value = tripData.days[dateString].notes;
+        renderModalTags();
         renderModalActivities();
         
         modal.showModal();
@@ -364,9 +422,41 @@
 
     function closeModal() {
         modal.close();
-        renderCalendar(); // Mettre à jour l'affichage de la carte
+        renderCalendar();
     }
 
+    // Affichage et gestion des clics sur les tags
+    function renderModalTags() {
+        const dayTags = tripData.days[currentEditingDate].tags;
+        
+        const locContainer = document.getElementById('modal-locations');
+        locContainer.innerHTML = AVAILABLE_LOCATIONS.map(loc => {
+            const isActive = dayTags.locations.includes(loc);
+            return `<span class="tag location ${isActive ? 'active' : ''}" onclick="toggleTag('locations', '${loc}')">${loc}</span>`;
+        }).join('');
+
+        const vibeContainer = document.getElementById('modal-vibes');
+        vibeContainer.innerHTML = AVAILABLE_VIBES.map(vibe => {
+            const isActive = dayTags.vibes.includes(vibe);
+            return `<span class="tag vibe ${isActive ? 'active' : ''}" onclick="toggleTag('vibes', '${vibe}')">${vibe}</span>`;
+        }).join('');
+    }
+
+    function toggleTag(category, value) {
+        const arr = tripData.days[currentEditingDate].tags[category];
+        const index = arr.indexOf(value);
+        
+        if (index > -1) {
+            arr.splice(index, 1); // Enlever si déjà présent
+        } else {
+            arr.push(value); // Ajouter si non présent
+        }
+        
+        saveData();
+        renderModalTags(); // Rafraîchir les couleurs dans la modale
+    }
+
+    // Gestion des activités et notes
     function renderModalActivities() {
         const list = document.getElementById('modal-activities');
         const activities = tripData.days[currentEditingDate].activities;
@@ -396,7 +486,7 @@
         renderModalActivities();
     }
 
-    function saveNotes() {
+    function saveNotesAndClose() {
         const notes = document.getElementById('modal-notes').value;
         tripData.days[currentEditingDate].notes = notes;
         saveData();
@@ -407,7 +497,6 @@
         localStorage.setItem('vacationCalendarApp', JSON.stringify(tripData));
     }
 
-    // Lancer l'appli
     init();
 </script>
 </body>
